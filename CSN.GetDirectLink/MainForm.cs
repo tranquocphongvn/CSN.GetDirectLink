@@ -32,6 +32,7 @@ namespace CSN.GetDirectLink
             ttLvSongs = new ToolTip();
             ptLastMousePoint = new Point(-1, -1);
             listLoading = false;
+            this.Text = Utils.COPYRIGHT;
         }
 
         private string GetHttpWebResponse(string url)
@@ -276,6 +277,8 @@ namespace CSN.GetDirectLink
                 txtConsole.AppendText(Environment.NewLine);
                 txtConsole.AppendText("============================================");
                 txtConsole.AppendText(Environment.NewLine);
+                txtConsole.AppendText(Utils.COPYRIGHT);
+                txtConsole.AppendText(Environment.NewLine);
                 EnableButtons(true);
                 listLoading = false;
                 Application.UseWaitCursor = false;
@@ -356,6 +359,7 @@ namespace CSN.GetDirectLink
                 item.Checked = true;
             }
             console.AppendLine("========================");
+            console.AppendLine(Utils.COPYRIGHT);
             txtConsole.Text = console.ToString();
         }
 
@@ -377,6 +381,7 @@ namespace CSN.GetDirectLink
                     item.Checked = false;
             }
             console.AppendLine("========================");
+            console.AppendLine(Utils.COPYRIGHT);
             txtConsole.Text = console.ToString();
         }
 
@@ -390,7 +395,7 @@ namespace CSN.GetDirectLink
                     links.AppendLine(item.SubItems[2].Text);
                 }
             }
-
+            links.AppendLine(Utils.COPYRIGHT);
             if (links.Length > 0)
                 Clipboard.SetText(links.ToString());
         }

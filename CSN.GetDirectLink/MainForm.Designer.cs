@@ -309,7 +309,7 @@
             this.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.Name = "MainForm";
             this.Tag = "500kbps";
-            this.Text = "CSN Get Direct Links. Version 3.0";
+            this.Text = "CSN Get Direct Links. Version 3.0. Copyright (c) by Phong Tran";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             ((System.ComponentModel.ISupportInitialize)(this.pbSpectrum)).EndInit();
             this.ResumeLayout(false);
