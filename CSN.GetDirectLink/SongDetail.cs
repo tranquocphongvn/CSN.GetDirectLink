@@ -10,10 +10,14 @@ namespace CSN.GetDirectLink
 {
     public class Utils
     {
-        public static string FLAC_LOSSLESS = "Lossless";
-        public static string M4A_500kbps = "500kbps";
-        public static string MP3_320kbps = "320kbps";
-        public static string MP3_128kbps = "128kbps";
+        public const string FLAC_LOSSLESS = "Lossless";
+        public const string M4A_500kbps = "500kbps";
+        public const string MP3_320kbps = "320kbps";
+        public const string MP3_128kbps = "128kbps";
+        public const string NOT_SURE = "Not sure";
+        public const string NONE = "None";
+        public const string VERIFIED = "Verified";
+
         public static List<string> SongQuality = new List<string>(new string[] { FLAC_LOSSLESS, M4A_500kbps, MP3_320kbps, MP3_128kbps });
 
         public static Image byteArrayToImage(byte[] byteArrayIn)

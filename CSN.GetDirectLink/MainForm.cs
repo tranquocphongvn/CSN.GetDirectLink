@@ -20,6 +20,7 @@ namespace CSN.GetDirectLink
 
         private ToolTip ttLvSongs;
         private Point ptLastMousePoint;
+        private bool listLoading = false;
 
         public MainForm()
         {
@@ -30,8 +31,7 @@ namespace CSN.GetDirectLink
 
             ttLvSongs = new ToolTip();
             ptLastMousePoint = new Point(-1, -1);
-
-
+            listLoading = false;
         }
 
         private string GetHttpWebResponse(string url)
@@ -185,12 +185,21 @@ namespace CSN.GetDirectLink
             return song;
         }
 
+        private void EnableButtons(bool enable)
+        {
+            btnGetLinks.Enabled = enable;
+            btnAllLinks.Enabled = enable;
+            btnCopyLinks.Enabled = enable;
+            btnQualifiedLinks.Enabled = enable;
+        }
+
         private void btnGetLinks_Click(object sender, EventArgs e)
         {
             Application.UseWaitCursor = true;
             Application.DoEvents();
 
-            btnGetLinks.Enabled = false;            
+            EnableButtons(false);
+            listLoading = true;
             txtConsole.Text = string.Empty;
             txtResponse.Text = string.Empty;
             lvSongs.Items.Clear();
@@ -223,7 +232,7 @@ namespace CSN.GetDirectLink
                 txtConsole.AppendText(Environment.NewLine);
                 txtConsole.AppendText("Maximum request song quality: " + requestSongQuality);
                 txtConsole.AppendText(Environment.NewLine);
-                txtConsole.AppendText("Song list:");
+                txtConsole.AppendText("Songs list:");
                 txtConsole.AppendText(Environment.NewLine);
                 txtConsole.AppendText("========================");
                 txtConsole.AppendText(Environment.NewLine);
@@ -262,12 +271,13 @@ namespace CSN.GetDirectLink
                 txtConsole.AppendText("============================================");
                 txtConsole.AppendText(Environment.NewLine);
                 txtConsole.AppendText(Environment.NewLine);
-                txtConsole.AppendText("Click on the 'Not sure' text to view Spectrum of the song.");
+                txtConsole.AppendText("Click on the '" + Utils.NOT_SURE + "' text (under Lossless? column) to view Spectrum of the song.");
                 txtConsole.AppendText(Environment.NewLine);
                 txtConsole.AppendText(Environment.NewLine);
                 txtConsole.AppendText("============================================");
                 txtConsole.AppendText(Environment.NewLine);
-                btnGetLinks.Enabled = true;
+                EnableButtons(true);
+                listLoading = false;
                 Application.UseWaitCursor = false;
                 Application.DoEvents();                
             }
@@ -279,7 +289,7 @@ namespace CSN.GetDirectLink
             {
                 txtConsole.AppendText(" - " + song.FullName);
                 txtConsole.AppendText(Environment.NewLine);
-                string lossless = song.VerifiedLossless ? "Verified" : (song.MaximumQuality == Utils.FLAC_LOSSLESS ? "Not sure" : "None");
+                string lossless = song.VerifiedLossless ? Utils.VERIFIED : (song.MaximumQuality == Utils.FLAC_LOSSLESS ? Utils.NOT_SURE : Utils.NONE);
                 txtConsole.AppendText("           - Request Quality: " + requestSongQuality + ". Maximum Quality: " + song.MaximumQuality + ". Lossless: " + lossless);
             }
             txtConsole.AppendText(Environment.NewLine);
@@ -292,12 +302,12 @@ namespace CSN.GetDirectLink
             item.UseItemStyleForSubItems = false;
 
             Color foreColor = (song.Quality == requestSongQuality) ? Color.DarkBlue : (song.Quality == Utils.MP3_128kbps ? Color.DimGray : Color.DarkGreen);
-            string lossless = song.VerifiedLossless ? "Verified" : (song.MaximumQuality == Utils.FLAC_LOSSLESS ? "Not sure" : "None");
+            string lossless = song.VerifiedLossless ? Utils.VERIFIED : (song.MaximumQuality == Utils.FLAC_LOSSLESS ? Utils.NOT_SURE : Utils.NONE);
             Font losslessFont = null;
             // Bold if Verified Lossless
-            if (lossless == "Verified")
+            if (lossless == Utils.VERIFIED)
                 losslessFont = new Font(lvSongs.Font, FontStyle.Bold);
-            else if (lossless == "None")
+            else if (lossless == Utils.NONE)
                 losslessFont = new Font(lvSongs.Font, FontStyle.Italic);
             else
                 losslessFont = lvSongs.Font;
@@ -318,7 +328,7 @@ namespace CSN.GetDirectLink
                 losslessFont = lvSongs.Font;
             item.SubItems.Add(song.MaximumQuality, foreColor, lvSongs.BackColor, losslessFont);
 
-            item.ToolTipText = "Click on the 'Not sure' text to view Spectrum of the song.";
+            item.ToolTipText = "Click on the '" + Utils.NOT_SURE + "' text (under Lossless? column) to view Spectrum of the song.";
             item.Checked = (requestSongQuality == song.Quality);
             item.Tag = song.Spectrum;
 
@@ -337,7 +347,7 @@ namespace CSN.GetDirectLink
         {
             StringBuilder console = new StringBuilder(string.Empty);
             console.AppendLine(albumName);
-            console.AppendLine("Song list:");
+            console.AppendLine("Songs list:");
             console.AppendLine("========================");
 
             foreach (ListViewItem item in lvSongs.Items)
@@ -353,7 +363,7 @@ namespace CSN.GetDirectLink
         {
             StringBuilder console = new StringBuilder(string.Empty);
             console.AppendLine(albumName);
-            console.AppendLine("Song list:");
+            console.AppendLine("Songs list:");
             console.AppendLine("========================");
 
             foreach (ListViewItem item in lvSongs.Items)
@@ -387,33 +397,42 @@ namespace CSN.GetDirectLink
 
         private void lvSongs_MouseClick(object sender, MouseEventArgs e)
         {
-            ListViewHitTestInfo info = lvSongs.HitTest(e.X, e.Y);
-            if (info.Item != null && info.SubItem != null && "Not sure" == info.SubItem.Text)
+            if (!listLoading)
             {
-                byte[] spectrum = (byte[])info.Item.Tag;
-                if (spectrum != null)
+                ttLvSongs.Hide(lvSongs);
+                ListViewHitTestInfo info = lvSongs.HitTest(e.X, e.Y);
+                if (info.Item != null && info.SubItem != null && Utils.NOT_SURE == info.SubItem.Text)
                 {
-                    pbSpectrum.Image = Utils.byteArrayToImage(spectrum);
-                    pbSpectrum.Visible = true;                    
+                    byte[] spectrum = (byte[])info.Item.Tag;
+                    if (spectrum != null)
+                    {
+                        pbSpectrum.Image = Utils.byteArrayToImage(spectrum);
+                        pbSpectrum.Visible = true;
+                    }
                 }
             }
         }
 
         private void lvSongs_ItemMouseHover(object sender, ListViewItemMouseHoverEventArgs e)
         {
-            if (!string.IsNullOrEmpty(e.Item.ToolTipText))
-                ttLvSongs.Show(e.Item.ToolTipText, e.Item.ListView, ptLastMousePoint.X, ptLastMousePoint.Y + 20);
-            if (pbSpectrum.Visible)
-                pbSpectrum.Visible = false;
+            if (!listLoading)
+            {
+                if (!string.IsNullOrEmpty(e.Item.ToolTipText))
+                    ttLvSongs.Show(e.Item.ToolTipText, lvSongs, ptLastMousePoint.X, ptLastMousePoint.Y + 20);
+                if (pbSpectrum.Visible)
+                    pbSpectrum.Visible = false;
+            }
         }
 
         private void lvSongs_MouseMove(object sender, MouseEventArgs e)
         {
-            ptLastMousePoint = e.Location;
+            if (!listLoading)
+                ptLastMousePoint = e.Location;
         }
 
         private void lvSongs_Leave(object sender, EventArgs e)
         {
+            ttLvSongs.Hide(lvSongs);
             if (pbSpectrum.Visible)
                 pbSpectrum.Visible = false;
         }
