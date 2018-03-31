@@ -135,6 +135,7 @@ namespace CSN.GetDirectLink
             if (downloadNode != null)
             {
                 song.DownloadURL = downloadNode.GetAttributeValue("href", string.Empty);
+                song.DownloadURL = song.DownloadURL.Replace(" ", "%20"); // added to fix bug, cannot download from batch urls
                 song.Quality = songQuality;
             }
             else
