@@ -135,7 +135,6 @@ namespace CSN.GetDirectLink
             if (downloadNode != null)
             {
                 song.DownloadURL = downloadNode.GetAttributeValue("href", string.Empty);
-                song.DownloadURL = song.DownloadURL.Replace(" ", "%20"); // added to fix bug, cannot download from batch urls
                 song.Quality = songQuality;
             }
             else
@@ -147,6 +146,7 @@ namespace CSN.GetDirectLink
                     song.Quality = song.MaximumQuality;
                 }
             }
+            song.DownloadURL = song.DownloadURL.Replace(" ", "%20"); // added to fix bug, cannot download from batch urls
 
             if (includeSpectrum && !song.VerifiedLossless && (song.MaximumQuality == Utils.FLAC_LOSSLESS))
             {
@@ -349,19 +349,29 @@ namespace CSN.GetDirectLink
 
         private void btnAllLinks_Click(object sender, EventArgs e)
         {
-            StringBuilder console = new StringBuilder(string.Empty);
-            console.AppendLine(albumName);
-            console.AppendLine("Songs list:");
-            console.AppendLine("========================");
-
-            foreach (ListViewItem item in lvSongs.Items)
+            if (lvSongs.CheckedItems.Count == lvSongs.Items.Count)
             {
-                console.AppendLine(item.SubItems[2].Text);
-                item.Checked = true;
+                foreach (ListViewItem item in lvSongs.Items)
+                {
+                    item.Checked = false;
+                }
             }
-            console.AppendLine("========================");
-            console.AppendLine(Utils.COPYRIGHT);
-            txtConsole.Text = console.ToString();
+            else
+            {
+                StringBuilder console = new StringBuilder(string.Empty);
+                console.AppendLine(albumName);
+                console.AppendLine("Songs list:");
+                console.AppendLine("========================");
+
+                foreach (ListViewItem item in lvSongs.Items)
+                {
+                    console.AppendLine(item.SubItems[2].Text);
+                    item.Checked = true;
+                }
+                console.AppendLine("========================");
+                console.AppendLine(Utils.COPYRIGHT);
+                txtConsole.Text = console.ToString();
+            }
         }
 
         private void btnQualifiedLinks_Click(object sender, EventArgs e)
@@ -396,6 +406,17 @@ namespace CSN.GetDirectLink
                     links.AppendLine(item.SubItems[2].Text);
                 }
             }
+
+            StringBuilder console = new StringBuilder(string.Empty);
+            console.AppendLine(albumName);
+            console.AppendLine("Songs list:");
+            console.AppendLine("========================");
+            console.AppendLine(links.ToString());
+            console.AppendLine("========================");
+            console.AppendLine(Utils.COPYRIGHT);
+            txtConsole.Text = console.ToString();
+
+            links.AppendLine("");
             links.AppendLine(Utils.COPYRIGHT);
             if (links.Length > 0)
                 Clipboard.SetText(links.ToString());

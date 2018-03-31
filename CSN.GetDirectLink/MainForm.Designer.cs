@@ -236,13 +236,14 @@
             // btnAllLinks
             // 
             this.btnAllLinks.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btnAllLinks.AutoSize = true;
             this.btnAllLinks.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnAllLinks.Location = new System.Drawing.Point(12, 615);
             this.btnAllLinks.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.btnAllLinks.Name = "btnAllLinks";
-            this.btnAllLinks.Size = new System.Drawing.Size(135, 27);
+            this.btnAllLinks.Size = new System.Drawing.Size(171, 27);
             this.btnAllLinks.TabIndex = 8;
-            this.btnAllLinks.Text = "Select all Links";
+            this.btnAllLinks.Text = "Select/Deselect all Links";
             this.btnAllLinks.UseVisualStyleBackColor = true;
             this.btnAllLinks.Click += new System.EventHandler(this.btnAllLinks_Click);
             // 
@@ -250,10 +251,10 @@
             // 
             this.btnQualifiedLinks.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.btnQualifiedLinks.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnQualifiedLinks.Location = new System.Drawing.Point(196, 615);
+            this.btnQualifiedLinks.Location = new System.Drawing.Point(253, 615);
             this.btnQualifiedLinks.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.btnQualifiedLinks.Name = "btnQualifiedLinks";
-            this.btnQualifiedLinks.Size = new System.Drawing.Size(203, 27);
+            this.btnQualifiedLinks.Size = new System.Drawing.Size(171, 27);
             this.btnQualifiedLinks.TabIndex = 9;
             this.btnQualifiedLinks.Text = "Select Qualified Links";
             this.btnQualifiedLinks.UseVisualStyleBackColor = true;
@@ -263,10 +264,10 @@
             // 
             this.btnCopyLinks.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.btnCopyLinks.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnCopyLinks.Location = new System.Drawing.Point(448, 615);
+            this.btnCopyLinks.Location = new System.Drawing.Point(494, 615);
             this.btnCopyLinks.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.btnCopyLinks.Name = "btnCopyLinks";
-            this.btnCopyLinks.Size = new System.Drawing.Size(203, 27);
+            this.btnCopyLinks.Size = new System.Drawing.Size(171, 27);
             this.btnCopyLinks.TabIndex = 10;
             this.btnCopyLinks.Text = "Copy Selected Links";
             this.btnCopyLinks.UseVisualStyleBackColor = true;
@@ -288,6 +289,7 @@
             // 
             // MainForm
             // 
+            this.AcceptButton = this.btnGetLinks;
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1800, 898);
