@@ -151,37 +151,39 @@ namespace CSN.GetDirectLink
             if (includeSpectrum && !song.VerifiedLossless && (song.MaximumQuality == Utils.FLAC_LOSSLESS))
             {
                 HtmlNode spectrumNode = htmlDoc.DocumentNode.SelectSingleNode("//img[contains(@src, '/spectrum/')]");
-                string spectrumUrl = spectrumNode.GetAttributeValue("src", string.Empty);
+                if (spectrumNode != null) // fixed nullpointer error
+                {
+                    string spectrumUrl = spectrumNode.GetAttributeValue("src", string.Empty);
 
-                MemoryStream ms = null;
-                WebResponse myResponse = null;
-                try
-                {
-                    HttpWebRequest myRequest = (HttpWebRequest)WebRequest.Create(spectrumUrl);
-                    myRequest.Method = "GET";
-                    myResponse = myRequest.GetResponse();
-                    ms = new MemoryStream();
-                    myResponse.GetResponseStream().CopyTo(ms);
-                    song.Spectrum = ms.ToArray();
-                    //song.Spectrum = Utils.ReadFully(myResponse.GetResponseStream());
+                    MemoryStream ms = null;
+                    WebResponse myResponse = null;
+                    try
+                    {
+                        HttpWebRequest myRequest = (HttpWebRequest)WebRequest.Create(spectrumUrl);
+                        myRequest.Method = "GET";
+                        myResponse = myRequest.GetResponse();
+                        ms = new MemoryStream();
+                        myResponse.GetResponseStream().CopyTo(ms);
+                        song.Spectrum = ms.ToArray();
+                        //song.Spectrum = Utils.ReadFully(myResponse.GetResponseStream());
+                    }
+                    catch (Exception ex)
+                    {
+                        txtConsole.AppendText("===========================");
+                        txtConsole.AppendText(Environment.NewLine);
+                        txtConsole.AppendText(ex.ToString());
+                        txtConsole.AppendText(Environment.NewLine);
+                        txtConsole.AppendText("===========================");
+                        txtConsole.AppendText(Environment.NewLine);
+                    }
+                    finally
+                    {
+                        if (ms != null)
+                            ms.Close();
+                        if (myResponse != null)
+                            myResponse.Close();
+                    }
                 }
-                catch (Exception ex)
-                {
-                    txtConsole.AppendText("===========================");
-                    txtConsole.AppendText(Environment.NewLine);
-                    txtConsole.AppendText(ex.ToString());
-                    txtConsole.AppendText(Environment.NewLine);
-                    txtConsole.AppendText("===========================");
-                    txtConsole.AppendText(Environment.NewLine);
-                }
-                finally
-                {
-                    if (ms != null)
-                        ms.Close();
-                    if (myResponse != null)
-                        myResponse.Close();
-                }
-
             }
 
             return song;
