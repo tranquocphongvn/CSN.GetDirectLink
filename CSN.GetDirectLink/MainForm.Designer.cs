@@ -49,6 +49,9 @@
             this.btnQualifiedLinks = new System.Windows.Forms.Button();
             this.btnCopyLinks = new System.Windows.Forms.Button();
             this.pbSpectrum = new System.Windows.Forms.PictureBox();
+            this.btnProxy = new System.Windows.Forms.Button();
+            this.btnDownload = new System.Windows.Forms.Button();
+            this.btnStop = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.pbSpectrum)).BeginInit();
             this.SuspendLayout();
             // 
@@ -141,7 +144,7 @@
             // 
             this.rb500kbps.AutoSize = true;
             this.rb500kbps.Checked = true;
-            this.rb500kbps.Location = new System.Drawing.Point(389, 43);
+            this.rb500kbps.Location = new System.Drawing.Point(396, 43);
             this.rb500kbps.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.rb500kbps.Name = "rb500kbps";
             this.rb500kbps.Size = new System.Drawing.Size(114, 21);
@@ -154,7 +157,7 @@
             // rb320kbps
             // 
             this.rb320kbps.AutoSize = true;
-            this.rb320kbps.Location = new System.Drawing.Point(568, 43);
+            this.rb320kbps.Location = new System.Drawing.Point(579, 43);
             this.rb320kbps.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.rb320kbps.Name = "rb320kbps";
             this.rb320kbps.Size = new System.Drawing.Size(114, 21);
@@ -166,7 +169,7 @@
             // rb128kbps
             // 
             this.rb128kbps.AutoSize = true;
-            this.rb128kbps.Location = new System.Drawing.Point(747, 43);
+            this.rb128kbps.Location = new System.Drawing.Point(762, 43);
             this.rb128kbps.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.rb128kbps.Name = "rb128kbps";
             this.rb128kbps.Size = new System.Drawing.Size(114, 21);
@@ -241,7 +244,7 @@
             this.btnAllLinks.Location = new System.Drawing.Point(12, 615);
             this.btnAllLinks.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.btnAllLinks.Name = "btnAllLinks";
-            this.btnAllLinks.Size = new System.Drawing.Size(171, 27);
+            this.btnAllLinks.Size = new System.Drawing.Size(185, 27);
             this.btnAllLinks.TabIndex = 8;
             this.btnAllLinks.Text = "Select/Deselect all Links";
             this.btnAllLinks.UseVisualStyleBackColor = true;
@@ -251,12 +254,12 @@
             // 
             this.btnQualifiedLinks.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.btnQualifiedLinks.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnQualifiedLinks.Location = new System.Drawing.Point(253, 615);
+            this.btnQualifiedLinks.Location = new System.Drawing.Point(266, 615);
             this.btnQualifiedLinks.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.btnQualifiedLinks.Name = "btnQualifiedLinks";
             this.btnQualifiedLinks.Size = new System.Drawing.Size(171, 27);
             this.btnQualifiedLinks.TabIndex = 9;
-            this.btnQualifiedLinks.Text = "Select Qualified Links";
+            this.btnQualifiedLinks.Text = "Select qualified Links";
             this.btnQualifiedLinks.UseVisualStyleBackColor = true;
             this.btnQualifiedLinks.Click += new System.EventHandler(this.btnQualifiedLinks_Click);
             // 
@@ -264,12 +267,12 @@
             // 
             this.btnCopyLinks.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.btnCopyLinks.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnCopyLinks.Location = new System.Drawing.Point(494, 615);
+            this.btnCopyLinks.Location = new System.Drawing.Point(506, 615);
             this.btnCopyLinks.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.btnCopyLinks.Name = "btnCopyLinks";
             this.btnCopyLinks.Size = new System.Drawing.Size(171, 27);
             this.btnCopyLinks.TabIndex = 10;
-            this.btnCopyLinks.Text = "Copy Selected Links";
+            this.btnCopyLinks.Text = "Copy selected Links";
             this.btnCopyLinks.UseVisualStyleBackColor = true;
             this.btnCopyLinks.Click += new System.EventHandler(this.btnCopyLinks_Click);
             // 
@@ -287,12 +290,54 @@
             this.pbSpectrum.TabStop = false;
             this.pbSpectrum.Visible = false;
             // 
+            // btnProxy
+            // 
+            this.btnProxy.Enabled = false;
+            this.btnProxy.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnProxy.Location = new System.Drawing.Point(945, 41);
+            this.btnProxy.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.btnProxy.Name = "btnProxy";
+            this.btnProxy.Size = new System.Drawing.Size(112, 27);
+            this.btnProxy.TabIndex = 13;
+            this.btnProxy.Text = "Proxies";
+            this.btnProxy.UseVisualStyleBackColor = true;
+            this.btnProxy.Click += new System.EventHandler(this.btnProxy_Click);
+            // 
+            // btnDownload
+            // 
+            this.btnDownload.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btnDownload.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnDownload.Location = new System.Drawing.Point(746, 615);
+            this.btnDownload.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.btnDownload.Name = "btnDownload";
+            this.btnDownload.Size = new System.Drawing.Size(196, 27);
+            this.btnDownload.TabIndex = 14;
+            this.btnDownload.Text = "Download selected Links";
+            this.btnDownload.UseVisualStyleBackColor = true;
+            this.btnDownload.Click += new System.EventHandler(this.btnDownload_Click);
+            // 
+            // btnStop
+            // 
+            this.btnStop.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnStop.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnStop.Location = new System.Drawing.Point(1676, 41);
+            this.btnStop.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.btnStop.Name = "btnStop";
+            this.btnStop.Size = new System.Drawing.Size(112, 27);
+            this.btnStop.TabIndex = 15;
+            this.btnStop.Text = "Stop";
+            this.btnStop.UseVisualStyleBackColor = true;
+            this.btnStop.Click += new System.EventHandler(this.btnStop_Click);
+            // 
             // MainForm
             // 
             this.AcceptButton = this.btnGetLinks;
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1800, 898);
+            this.Controls.Add(this.btnStop);
+            this.Controls.Add(this.btnDownload);
+            this.Controls.Add(this.btnProxy);
             this.Controls.Add(this.pbSpectrum);
             this.Controls.Add(this.btnCopyLinks);
             this.Controls.Add(this.btnQualifiedLinks);
@@ -342,6 +387,9 @@
         private System.Windows.Forms.Button btnQualifiedLinks;
         private System.Windows.Forms.Button btnCopyLinks;
         private System.Windows.Forms.PictureBox pbSpectrum;
+        private System.Windows.Forms.Button btnProxy;
+        private System.Windows.Forms.Button btnDownload;
+        private System.Windows.Forms.Button btnStop;
     }
 }
 

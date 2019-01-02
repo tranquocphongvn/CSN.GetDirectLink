@@ -21,6 +21,7 @@ namespace CSN.GetDirectLink
         private ToolTip ttLvSongs;
         private Point ptLastMousePoint;
         private bool listLoading = false;
+        private bool stopped = true;
 
         public MainForm()
         {
@@ -35,7 +36,7 @@ namespace CSN.GetDirectLink
             this.Text = Utils.COPYRIGHT;
         }
 
-        private string GetHttpWebResponse(string url)
+        private string GetHttpWebResponse(string url, WebProxy proxy = null)
         {
             txtConsole.AppendText("Get Http Web Response from: " + url);
             txtConsole.AppendText(Environment.NewLine);
@@ -43,6 +44,9 @@ namespace CSN.GetDirectLink
 
             HttpWebRequest myRequest = (HttpWebRequest)WebRequest.Create(url);
             myRequest.Method = "GET";
+            if (proxy != null)
+                myRequest.Proxy = proxy;
+
             WebResponse myResponse = myRequest.GetResponse();
             StreamReader sr = new StreamReader(myResponse.GetResponseStream(), System.Text.Encoding.UTF8);
             string result = sr.ReadToEnd();
@@ -136,6 +140,8 @@ namespace CSN.GetDirectLink
             {
                 song.DownloadURL = downloadNode.GetAttributeValue("href", string.Empty);
                 song.Quality = songQuality;
+                if (song.VerifiedLossless)
+                    song.MaximumQuality = Utils.FLAC_LOSSLESS;
             }
             else
             {
@@ -143,7 +149,24 @@ namespace CSN.GetDirectLink
                 if (downloadNode != null)
                 {
                     song.DownloadURL = downloadNode.GetAttributeValue("href", string.Empty);
-                    song.Quality = song.MaximumQuality;
+                    if (song.MaximumQuality == Utils.MP3_320kbps)
+                    {
+                        if (songQuality == Utils.FLAC_LOSSLESS)
+                        {
+                            song.DownloadURL = song.DownloadURL.Replace("/320/", "/flac/").Replace("[320kbps_MP3].mp3", "[Lossless_FLAC].flac");
+                        }
+                        else if (songQuality == Utils.M4A_500kbps)
+                        {
+                            song.DownloadURL = song.DownloadURL.Replace("/320/", "/m4a/").Replace("[320kbps_MP3].mp3", "[500kbps_M4A].m4a");
+                        }
+                        song.Quality = songQuality;
+                    }
+                    else
+                    {
+                        song.Quality = song.MaximumQuality;
+                    }
+                    if (song.VerifiedLossless)
+                        song.MaximumQuality = Utils.FLAC_LOSSLESS;
                 }
             }
             song.DownloadURL = song.DownloadURL.Replace(" ", "%20"); // added to fix bug, cannot download from batch urls
@@ -195,6 +218,7 @@ namespace CSN.GetDirectLink
             btnAllLinks.Enabled = enable;
             btnCopyLinks.Enabled = enable;
             btnQualifiedLinks.Enabled = enable;
+            btnDownload.Enabled = enable;
         }
 
         private void btnGetLinks_Click(object sender, EventArgs e)
@@ -207,11 +231,11 @@ namespace CSN.GetDirectLink
             txtConsole.Text = string.Empty;
             txtResponse.Text = string.Empty;
             lvSongs.Items.Clear();
-
+            stopped = false;
             try
             {
                 //txtLink.Text = "http://m2.chiasenhac.vn/mp3/vietnam/v-pop/tam-su-tuoi-30~trinh-thang-binh~tsvcsc0dqv4vnm.html";
-                string response = GetHttpWebResponse(txtLink.Text);
+                string response = GetHttpWebResponse(txtLink.Text, null);
 
                 txtResponse.Text = response;
                 HtmlAgilityPack.HtmlDocument htmlDoc = new HtmlAgilityPack.HtmlDocument();
@@ -226,7 +250,6 @@ namespace CSN.GetDirectLink
                         requestSongQuality = (string)rb.Tag;
                 }
 
-                
                 List<string> songUrls = GetSongUrls(htmlDoc);
 
                 txtConsole.AppendText(Environment.NewLine);
@@ -241,12 +264,15 @@ namespace CSN.GetDirectLink
                 txtConsole.AppendText("========================");
                 txtConsole.AppendText(Environment.NewLine);
 
+                WebProxy mainProxy = new WebProxy("123.30.172.60:3128");
+                mainProxy = null;
+
                 List<SongDetail> songs = new List<SongDetail>();
                 foreach (string songUrl in songUrls)
                 {
                     if (!string.IsNullOrEmpty(songUrl))
                     {
-                        response = GetHttpWebResponse(songUrl);
+                        response = GetHttpWebResponse(songUrl, mainProxy);
                         txtResponse.Text = response;
                         htmlDoc = new HtmlAgilityPack.HtmlDocument();
                         htmlDoc.LoadHtml(response);
@@ -256,7 +282,11 @@ namespace CSN.GetDirectLink
 
                         AddSongDetailToConsole(song, requestSongQuality);
                         AddSongDetailToListView(song, requestSongQuality);
+                        
                     }
+
+                    if (stopped)
+                        break;
                 }
             }
             catch (Exception ex)
@@ -302,6 +332,7 @@ namespace CSN.GetDirectLink
 
             Application.DoEvents();
         }
+
         private void AddSongDetailToListView(SongDetail song, string requestSongQuality)
         {
             ListViewItem item = new ListViewItem();
@@ -464,6 +495,37 @@ namespace CSN.GetDirectLink
             ttLvSongs.Hide(lvSongs);
             if (pbSpectrum.Visible)
                 pbSpectrum.Visible = false;
+        }
+
+        private void btnProxy_Click(object sender, EventArgs e)
+        {
+            ProxyForm form = new ProxyForm();
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+            }
+            form.Dispose();
+        }
+
+        private void btnDownload_Click(object sender, EventArgs e)
+        {
+            List<String> links = new List<String>();
+            foreach (ListViewItem item in lvSongs.Items)
+            {
+                if (item.Checked)
+                {
+                    links.Add(item.SubItems[2].Text);
+                }
+            }
+
+            DownloadForm form = new DownloadForm();
+            form.SetDirectLinks(links);
+            form.ShowDialog();
+            form.Dispose();
+        }
+
+        private void btnStop_Click(object sender, EventArgs e)
+        {
+            stopped = true;
         }
     }
 }
