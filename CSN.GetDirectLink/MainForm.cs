@@ -214,7 +214,9 @@ namespace CSN.GetDirectLink
 
         private void EnableButtons(bool enable)
         {
-            btnGetLinks.Enabled = enable;
+            //btnGetLinks.Enabled = enable;
+            btnGetLinks.Text = enable ? "Get Links" : "Stop";
+
             btnAllLinks.Enabled = enable;
             btnCopyLinks.Enabled = enable;
             btnQualifiedLinks.Enabled = enable;
@@ -227,96 +229,97 @@ namespace CSN.GetDirectLink
             Application.DoEvents();
 
             EnableButtons(false);
-            listLoading = true;
-            txtConsole.Text = string.Empty;
-            txtResponse.Text = string.Empty;
-            lvSongs.Items.Clear();
-            stopped = false;
-            try
+            if (stopped)
             {
-                //txtLink.Text = "http://m2.chiasenhac.vn/mp3/vietnam/v-pop/tam-su-tuoi-30~trinh-thang-binh~tsvcsc0dqv4vnm.html";
-                string response = GetHttpWebResponse(txtLink.Text, null);
-
-                txtResponse.Text = response;
-                HtmlAgilityPack.HtmlDocument htmlDoc = new HtmlAgilityPack.HtmlDocument();
-                htmlDoc.LoadHtml(response);
-
-                // Song Quality: Lossless, 500kbps, 320kbps, 128kbps
-                List<RadioButton> rbQuality = new List<RadioButton> { rbLossless, rb500kbps, rb320kbps, rb128kbps };
-                requestSongQuality = Utils.M4A_500kbps;
-                foreach (RadioButton rb in rbQuality)
+                listLoading = true;
+                txtConsole.Text = string.Empty;
+                txtResponse.Text = string.Empty;
+                lvSongs.Items.Clear();
+                stopped = false;
+                try
                 {
-                    if (rb.Checked)
-                        requestSongQuality = (string)rb.Tag;
-                }
+                    //txtLink.Text = "http://m2.chiasenhac.vn/mp3/vietnam/v-pop/tam-su-tuoi-30~trinh-thang-binh~tsvcsc0dqv4vnm.html";
+                    string response = GetHttpWebResponse(txtLink.Text, null);
 
-                List<string> songUrls = GetSongUrls(htmlDoc);
+                    txtResponse.Text = response;
+                    HtmlAgilityPack.HtmlDocument htmlDoc = new HtmlAgilityPack.HtmlDocument();
+                    htmlDoc.LoadHtml(response);
 
-                txtConsole.AppendText(Environment.NewLine);
-                txtConsole.AppendText("============================================");
-                txtConsole.AppendText(Environment.NewLine);
-                txtConsole.AppendText(albumName);
-                txtConsole.AppendText(Environment.NewLine);
-                txtConsole.AppendText("Maximum request song quality: " + requestSongQuality);
-                txtConsole.AppendText(Environment.NewLine);
-                txtConsole.AppendText("Songs list:");
-                txtConsole.AppendText(Environment.NewLine);
-                txtConsole.AppendText("========================");
-                txtConsole.AppendText(Environment.NewLine);
-
-                WebProxy mainProxy = new WebProxy("123.30.172.60:3128");
-                mainProxy = null;
-
-                List<SongDetail> songs = new List<SongDetail>();
-                foreach (string songUrl in songUrls)
-                {
-                    if (!string.IsNullOrEmpty(songUrl))
+                    // Song Quality: Lossless, 500kbps, 320kbps, 128kbps
+                    List<RadioButton> rbQuality = new List<RadioButton> { rbLossless, rb500kbps, rb320kbps, rb128kbps };
+                    requestSongQuality = Utils.M4A_500kbps;
+                    foreach (RadioButton rb in rbQuality)
                     {
-                        response = GetHttpWebResponse(songUrl, mainProxy);
-                        txtResponse.Text = response;
-                        htmlDoc = new HtmlAgilityPack.HtmlDocument();
-                        htmlDoc.LoadHtml(response);
-
-                        SongDetail song = GetSongDetail(htmlDoc, requestSongQuality, true);
-                        songs.Add(song);
-
-                        AddSongDetailToConsole(song, requestSongQuality);
-                        AddSongDetailToListView(song, requestSongQuality);
-                        
+                        if (rb.Checked)
+                            requestSongQuality = (string)rb.Tag;
                     }
 
-                    if (stopped)
-                        break;
+                    List<string> songUrls = GetSongUrls(htmlDoc);
+
+                    txtConsole.AppendText(Environment.NewLine);
+                    txtConsole.AppendText("============================================");
+                    txtConsole.AppendText(Environment.NewLine);
+                    txtConsole.AppendText(albumName);
+                    txtConsole.AppendText(Environment.NewLine);
+                    txtConsole.AppendText("Maximum request song quality: " + requestSongQuality);
+                    txtConsole.AppendText(Environment.NewLine);
+                    txtConsole.AppendText("Songs list:");
+                    txtConsole.AppendText(Environment.NewLine);
+                    txtConsole.AppendText("========================");
+                    txtConsole.AppendText(Environment.NewLine);
+
+                    List<SongDetail> songs = new List<SongDetail>();
+                    foreach (string songUrl in songUrls)
+                    {
+                        if (!string.IsNullOrEmpty(songUrl))
+                        {
+                            response = GetHttpWebResponse(songUrl, null);
+                            txtResponse.Text = response;
+                            htmlDoc = new HtmlAgilityPack.HtmlDocument();
+                            htmlDoc.LoadHtml(response);
+
+                            SongDetail song = GetSongDetail(htmlDoc, requestSongQuality, true);
+                            songs.Add(song);
+
+                            AddSongDetailToConsole(song, requestSongQuality);
+                            AddSongDetailToListView(song, requestSongQuality);
+
+                        }
+
+                        if (stopped)
+                            break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    txtConsole.AppendText("===========================");
+                    txtConsole.AppendText(Environment.NewLine);
+                    txtConsole.AppendText(ex.ToString());
+                    txtConsole.AppendText(Environment.NewLine);
+                    txtConsole.AppendText("===========================");
+                    txtConsole.AppendText(Environment.NewLine);
+
+                    MessageBox.Show(ex.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                finally
+                {
+                    txtConsole.AppendText("============================================");
+                    txtConsole.AppendText(Environment.NewLine);
+                    txtConsole.AppendText(Environment.NewLine);
+                    txtConsole.AppendText("Click on the '" + Utils.NOT_SURE + "' text (under Lossless? column) to view Spectrum of the song.");
+                    txtConsole.AppendText(Environment.NewLine);
+                    txtConsole.AppendText(Environment.NewLine);
+                    txtConsole.AppendText("============================================");
+                    txtConsole.AppendText(Environment.NewLine);
+                    txtConsole.AppendText(Utils.COPYRIGHT);
+                    txtConsole.AppendText(Environment.NewLine);
                 }
             }
-            catch (Exception ex)
-            {
-                txtConsole.AppendText("===========================");
-                txtConsole.AppendText(Environment.NewLine);
-                txtConsole.AppendText(ex.ToString());
-                txtConsole.AppendText(Environment.NewLine);
-                txtConsole.AppendText("===========================");
-                txtConsole.AppendText(Environment.NewLine);
-
-                MessageBox.Show(ex.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                txtConsole.AppendText("============================================");
-                txtConsole.AppendText(Environment.NewLine);
-                txtConsole.AppendText(Environment.NewLine);
-                txtConsole.AppendText("Click on the '" + Utils.NOT_SURE + "' text (under Lossless? column) to view Spectrum of the song.");
-                txtConsole.AppendText(Environment.NewLine);
-                txtConsole.AppendText(Environment.NewLine);
-                txtConsole.AppendText("============================================");
-                txtConsole.AppendText(Environment.NewLine);
-                txtConsole.AppendText(Utils.COPYRIGHT);
-                txtConsole.AppendText(Environment.NewLine);
-                EnableButtons(true);
-                listLoading = false;
-                Application.UseWaitCursor = false;
-                Application.DoEvents();                
-            }
+            stopped = true;
+            EnableButtons(true);
+            listLoading = false;
+            Application.UseWaitCursor = false;
+            Application.DoEvents();
         }
 
         private void AddSongDetailToConsole(SongDetail song, string requestSongQuality)
@@ -517,10 +520,17 @@ namespace CSN.GetDirectLink
                 }
             }
 
-            DownloadForm form = new DownloadForm();
-            form.SetDirectLinks(links);
-            form.ShowDialog();
-            form.Dispose();
+            if (links.Count > 0)
+            {
+                DownloadForm form = new DownloadForm();
+                form.SetDirectLinks(links);
+                form.ShowDialog();
+                form.Dispose();
+            }
+            else
+            {
+                MessageBox.Show("Please selecte any songs!", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
         }
 
         private void btnStop_Click(object sender, EventArgs e)

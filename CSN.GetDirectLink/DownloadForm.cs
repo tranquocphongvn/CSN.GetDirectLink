@@ -15,7 +15,6 @@ namespace CSN
 {
     public partial class DownloadForm : Form
     {
-        private WebProxy mainProxy = null;
         //private List<String> proxies = null;
         private List<String> directLinks = null;
         Downloader downloader = null;
@@ -41,6 +40,7 @@ namespace CSN
 
             txtProxies.Text = proxies.ToString();
             txtConsole.Clear();
+            btnStop.Enabled = false;
         }
 
         public void SetDirectLinks(List<String> links)
@@ -60,13 +60,14 @@ namespace CSN
 
         private void DownloadForm_Load(object sender, EventArgs e)
         {
-            txtDownloadFolder.Text = KnownFolders.GetPath(KnownFolder.Downloads);
+            txtDownloadFolder.Text = KnownFolders.GetPath(KnownFolder.Downloads) + "\\Music_CSN";
         }
 
         private void btnDownload_Click(object sender, EventArgs e)
         {
             Application.UseWaitCursor = true;
             stopped = false;
+            btnStop.Enabled = true;
             btnDownload.Enabled = false;
             List<String> proxies = GetProxiesList();
             txtConsole.Clear();
@@ -91,6 +92,7 @@ namespace CSN
                     break;
             }
             btnDownload.Enabled = true;
+            btnStop.Enabled = false;
             Application.UseWaitCursor = false;
         }
 
@@ -99,7 +101,7 @@ namespace CSN
             stopped = true;
             if (downloader != null)
                 downloader.StopDownload();
-            this.Close();
+            //this.Close();
         }
 
         private void AddDownloadSongToConsole(String directLink)
@@ -120,7 +122,7 @@ namespace CSN
             downloader.Error += Downloader_Error;
             downloader.ProgressChanged += Downloader_ProgressChanged;
 
-            return downloader.DownloadFile(directLink, txtDownloadFolder.Text + "\\Music_Test", proxy);
+            return downloader.DownloadFile(directLink, txtDownloadFolder.Text.Trim(), proxy);
         }
 
         private void Downloader_ProgressChanged(object sender, DownloadProgressChangedEventArgs e)
@@ -132,17 +134,16 @@ namespace CSN
                 percentage = 0;
             prb1.Value = percentage;
 
-            lblMB1.Text = Math.Round(e.BytesReceived / 1048576.0, 2) + "/" + Math.Round(e.TotalBytesToReceive / 1048576.0, 2) + " MB";
-            lblSpeed1.Text = Math.Round(e.CurrentSpeed / 1048576, 4) + " MB/s";
-            lblTimeLeft1.Text = e.TimeLeft.ToString(@"hh\:mm\:ss\.ffff");
+            lblDownload1.Text = string.Format("D: {0:n}/{1:n} MB", e.BytesReceived / 1048576.0,  e.TotalBytesToReceive / 1048576.0);
+            lblSpeed1.Text = string.Format("S: {0:n4} MB/s", e.CurrentSpeed / 1048576);
+            lblTimeLeft1.Text = "L: " + e.TimeLeft.ToString(@"hh\:mm\:ss\.ffff");
             Application.DoEvents();
         }
 
         private void Downloader_Completed(object sender, EventArgs e)
         {
             Downloader downloader = (Downloader)sender;
-            downloader.Rename();
-            txtConsole.AppendText(" ... DONE." + Environment.NewLine);
+            txtConsole.AppendText(" ... Proxy: [" + downloader.GetProxyAddress() + "]. DONE." + Environment.NewLine);
             Application.DoEvents();
         }
 
@@ -150,8 +151,15 @@ namespace CSN
         {
             Downloader downloader = (Downloader)sender;
             downloader.Rename();
-            txtConsole.AppendText(" ... Error: " + e.ErrorMessage + Environment.NewLine);
+            txtConsole.AppendText(" ... Proxy: " + downloader.GetProxyAddress() + ". Error: " + e.ErrorMessage + Environment.NewLine);
             Application.DoEvents();
+        }
+
+        private void DownloadForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            stopped = true;
+            if (downloader != null)
+                downloader.StopDownload();
         }
     }
 }

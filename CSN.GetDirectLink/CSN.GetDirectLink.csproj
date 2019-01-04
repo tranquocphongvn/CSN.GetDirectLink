@@ -91,6 +91,7 @@
       <DependentUpon>ProxyForm.cs</DependentUpon>
     </Compile>
     <Compile Include="SongDetail.cs" />
+    <Compile Include="ThreadDownloader.cs" />
     <EmbeddedResource Include="DownloadForm.resx">
       <DependentUpon>DownloadForm.cs</DependentUpon>
     </EmbeddedResource>

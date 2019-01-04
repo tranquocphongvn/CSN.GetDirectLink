@@ -41,9 +41,16 @@ namespace CSN
         string filename;
         string tempFilename;
         string saveDir;
+        string proxyAddr;
 
         public int DownloadFile(string downloadLink, string dir, WebProxy proxy = null)
         {
+            DirectoryInfo dirInfo = Directory.GetParent(dir);
+            if (!dirInfo.Exists)
+            {
+                dirInfo.Create();
+            }
+            dir = dirInfo.FullName;
             saveDir = dir;
             Uri uri = new Uri(downloadLink);
             filename = System.IO.Path.GetFileName(uri.LocalPath);
@@ -59,6 +66,7 @@ namespace CSN
             var request = (HttpWebRequest)HttpWebRequest.Create(downloadLink);
             request.Proxy = proxy;
             request.AddRange(existingLength);
+            proxyAddr = (proxy != null)? proxy.Address.ToString() : string.Empty;
 
             try
             {
@@ -164,6 +172,11 @@ namespace CSN
             }
         }
 
+        public string GetProxyAddress()
+        {
+            return string.IsNullOrEmpty(proxyAddr)? "NONE" : proxyAddr;
+        }
+
         public bool ResumeUnsupportedWarning()
         {
             var result = MessageBox.Show("When trying to resume the download , Mackerel got a response from the server that it doesn't support resuming the download. It's possible that it's a temporary error of the server, and you will be able to resume the file at a later time, but at this time Mackerel can download this file from the beginning.\n\nDo you want to download this file from the beginning?", filename, MessageBoxButtons.YesNo);
@@ -200,6 +213,7 @@ namespace CSN
             var handler = Completed;
             if (handler != null)
             {
+                Rename();
                 handler(this, e);
             }
         }

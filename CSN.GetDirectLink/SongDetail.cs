@@ -17,7 +17,7 @@ namespace CSN.GetDirectLink
         public const string NOT_SURE = "Not sure";
         public const string NONE = "None";
         public const string VERIFIED = "Verified";
-        public const string COPYRIGHT = "CSN Get Direct Links. Version 3.0. Copyright (c) by Phong Tran";
+        public const string COPYRIGHT = "CSN Downloader and Get Direct Links. Version 1.0. Copyright (c) by Phong Tran";
 
         public static List<string> SongQuality = new List<string>(new string[] { FLAC_LOSSLESS, M4A_500kbps, MP3_320kbps, MP3_128kbps });
 
