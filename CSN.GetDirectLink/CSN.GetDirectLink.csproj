@@ -69,6 +69,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Downloader.cs" />
+    <Compile Include="DownloaderPool.cs" />
     <Compile Include="DownloadForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -91,7 +92,7 @@
       <DependentUpon>ProxyForm.cs</DependentUpon>
     </Compile>
     <Compile Include="SongDetail.cs" />
-    <Compile Include="ThreadDownloader.cs" />
+    <Compile Include="DownloaderThread.cs" />
     <EmbeddedResource Include="DownloadForm.resx">
       <DependentUpon>DownloadForm.cs</DependentUpon>
     </EmbeddedResource>

@@ -34,39 +34,66 @@ namespace CSN
         public event EventHandler Completed;
         public event EventHandler<ErrorEventArgs> Error;
 
-        public bool stop = true; // by default stop is true
-        public bool paused = false;
+        private bool stopped = true; // by default stop is true
+        private bool paused = false;
         SemaphoreSlim pauseLock = new SemaphoreSlim(1);
 
-        string filename;
-        string tempFilename;
-        string saveDir;
-        string proxyAddr;
+        private string filename;
+        private string tempFilename;
 
-        public int DownloadFile(string downloadLink, string dir, WebProxy proxy = null)
+        private string saveDirectory;
+        private string downloadLink;
+        private WebProxy proxy;
+
+        public Downloader(string downloadLink, string saveDirectory, WebProxy proxy)
         {
-            DirectoryInfo dirInfo = Directory.GetParent(dir);
-            if (!dirInfo.Exists)
+            DownloadLink = downloadLink;
+            SaveDirectory = new DirectoryInfo(saveDirectory.Trim()).FullName;
+            Proxy = proxy;
+        }
+
+        public Downloader(string downloadLink, string saveDirectory) : this(downloadLink, saveDirectory, null)
+        {
+        }
+
+        public bool Stopped { get => stopped; set => stopped = value; }
+        public bool Paused { get => paused; set => paused = value; }
+
+        public string DownloadLink { get => downloadLink; set => downloadLink = value; }
+        public WebProxy Proxy { get => proxy; set => proxy = value; }
+        public string SaveDirectory { get => saveDirectory; set => saveDirectory = value; }
+        public string Filename { get => filename; set => filename = value; }
+        public string TempFilename { get => tempFilename; set => tempFilename = value; }
+
+        public int DownloadFile(string downloadLink, string saveDirectory, WebProxy proxy = null)
+        {
+            DownloadLink = downloadLink;
+            SaveDirectory = new DirectoryInfo(saveDirectory.Trim()).FullName;
+            Proxy = proxy;
+
+            return Start();
+        }
+
+        public int Start()
+        {
+            if (!Directory.Exists(SaveDirectory))
             {
-                dirInfo.Create();
+                Directory.CreateDirectory(SaveDirectory);
             }
-            dir = dirInfo.FullName;
-            saveDir = dir;
-            Uri uri = new Uri(downloadLink);
-            filename = System.IO.Path.GetFileName(uri.LocalPath);
 
-            tempFilename = filename + ".tmp";
-            stop = false; // always set this bool to false, everytime this method is called
+            Uri uri = new Uri(DownloadLink);
+            Filename = System.IO.Path.GetFileName(uri.LocalPath);
+            TempFilename = Filename + ".tmp";
+            Stopped = false; // always set this bool to false, everytime this method is cVerycomplealled
 
-            var tempFileInfo = new FileInfo(dir + "\\" + tempFilename);
+            var tempFileInfo = new FileInfo(SaveDirectory + "\\" + TempFilename);
             long existingLength = 0;
             if (tempFileInfo.Exists)
                 existingLength = tempFileInfo.Length;
 
             var request = (HttpWebRequest)HttpWebRequest.Create(downloadLink);
-            request.Proxy = proxy;
+            request.Proxy = Proxy;
             request.AddRange(existingLength);
-            proxyAddr = (proxy != null)? proxy.Address.ToString() : string.Empty;
 
             try
             {
@@ -77,12 +104,15 @@ namespace CSN
 
                     if ((int)response.StatusCode == 206) //same as: response.StatusCode == HttpStatusCode.PartialContent
                     {
-                        _logger.LogMessage("Resumable");
+                        if (_logger != null)
+                            _logger.LogMessage("Resumable");
+                        
                         downloadResumable = true;
                     }
                     else // sometimes a server that supports partial content will lose its ability to send partial content(weird behavior) and thus the download will lose its resumability
                     {
-                        _logger.LogMessage("Not Resumable");
+                        if (_logger != null)
+                            _logger.LogMessage("Not Resumable");
                         if (existingLength > 0)
                         {
                             if (ResumeUnsupportedWarning() == false) // warn and ask for confirmation to continue if the half downloaded file is unresumable
@@ -102,7 +132,7 @@ namespace CSN
                         int byteSize = 0;
                         long totalReceived = byteSize + existingLength;
                         var sw = Stopwatch.StartNew();
-                        while (!stop && (byteSize = stream.Read(downBuffer, 0, downBuffer.Length)) > 0)
+                        while (!Stopped && (byteSize = stream.Read(downBuffer, 0, downBuffer.Length)) > 0)
                         {
                             saveFileStream.Write(downBuffer, 0, byteSize);
                             totalReceived += byteSize;
@@ -116,10 +146,11 @@ namespace CSN
                         sw.Stop();
                     }
                 }
-                if (!stop) OnCompleted(EventArgs.Empty);
+                if (!Stopped) OnCompleted(EventArgs.Empty);
             }
             catch (WebException e)
             {
+                Stopped = true;
                 HttpWebResponse response = (HttpWebResponse)e.Response;
                 //MessageBox.Show(e.Message, filename);
                 if (response != null)
@@ -133,14 +164,15 @@ namespace CSN
                     return -1;
                 }
             }
+            Stopped = true;
             return 0;
         }
 
         public void Pause()
         {
-            if (!paused)
+            if (!Paused)
             {
-                paused = true;
+                Paused = true;
                 // Note this cannot block for more than a moment
                 // since the download thread doesn't keep the lock held
                 pauseLock.Wait();
@@ -149,37 +181,43 @@ namespace CSN
 
         public void Unpause()
         {
-            if (paused)
+            if (Paused)
             {
-                paused = false;
+                Paused = false;
                 pauseLock.Release();
             }
         }
 
         public void StopDownload()
         {
-            stop = true;
+            Stopped = true;
             this.Unpause();  // stop waiting on lock if needed
         }
 
         public void Rename()
         {
-            if (File.Exists(saveDir + "\\" + tempFilename)) {
-                if (!File.Exists(saveDir + "\\" + filename))
+            string tempFullPath = string.Format("{0}\\{1}", SaveDirectory, TempFilename);
+            string newFullPath = string.Format("{0}\\{1}", SaveDirectory, Filename);
+            if (File.Exists(tempFullPath)) {
+                String name = Path.GetFileNameWithoutExtension(newFullPath);
+                String ext = Path.GetExtension(newFullPath);
+                int i = 1;
+                while (File.Exists(newFullPath) && i <= 10000)
                 {
-                    File.Move(saveDir + "\\" + tempFilename, saveDir + "\\" + filename);
+                    newFullPath = string.Format("{0}\\{1}_{2}{3}", SaveDirectory, name, ++i, ext);
                 }
+                File.Move(tempFullPath, newFullPath);
             }
         }
 
         public string GetProxyAddress()
         {
-            return string.IsNullOrEmpty(proxyAddr)? "NONE" : proxyAddr;
+            return (Proxy == null)? "NONE" : Proxy.Address.Authority;
         }
 
         public bool ResumeUnsupportedWarning()
         {
-            var result = MessageBox.Show("When trying to resume the download , Mackerel got a response from the server that it doesn't support resuming the download. It's possible that it's a temporary error of the server, and you will be able to resume the file at a later time, but at this time Mackerel can download this file from the beginning.\n\nDo you want to download this file from the beginning?", filename, MessageBoxButtons.YesNo);
+            var result = MessageBox.Show("When trying to resume the download , Mackerel got a response from the server that it doesn't support resuming the download. It's possible that it's a temporary error of the server, and you will be able to resume the file at a later time, but at this time Mackerel can download this file from the beginning.\n\nDo you want to download this file from the beginning?", Filename, MessageBoxButtons.YesNo);
             if (result == DialogResult.Yes)
             {
                 return true;
@@ -211,9 +249,9 @@ namespace CSN
         protected virtual void OnCompleted(EventArgs e)
         {
             var handler = Completed;
+            Rename();
             if (handler != null)
             {
-                Rename();
                 handler(this, e);
             }
         }

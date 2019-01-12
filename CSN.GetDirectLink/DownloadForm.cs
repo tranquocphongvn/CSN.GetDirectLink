@@ -8,6 +8,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -15,9 +16,11 @@ namespace CSN
 {
     public partial class DownloadForm : Form
     {
+        public delegate void AppendTextDelegate(TextBox txt, string text);
+
         //private List<String> proxies = null;
-        private List<String> directLinks = null;
         Downloader downloader = null;
+        private List<String> directLinks = null;
         private bool stopped = true;
 
         public DownloadForm()
@@ -48,6 +51,11 @@ namespace CSN
             directLinks = links;
         }
 
+        public void AppendText(TextBox txt, string text)
+        {
+            txt.AppendText(text);
+        }
+
         private List<String> GetProxiesList()
         {
             List<String> proxies = null;
@@ -60,7 +68,7 @@ namespace CSN
 
         private void DownloadForm_Load(object sender, EventArgs e)
         {
-            txtDownloadFolder.Text = KnownFolders.GetPath(KnownFolder.Downloads) + "\\Music_CSN";
+            txtDownloadFolder.Text = KnownFolders.GetPath(KnownFolder.Downloads) + "\\Music_CSN_1";
         }
 
         private void btnDownload_Click(object sender, EventArgs e)
@@ -72,9 +80,33 @@ namespace CSN
             List<String> proxies = GetProxiesList();
             txtConsole.Clear();
 
-            foreach (String link in directLinks)
+            List<Thread> threads = new List<Thread>();
+            DownloaderPool downloaderPool = new DownloaderPool();
+
+            downloaderPool.Add(new DownloaderThread(prb1, lblFile1, lblDownload1, lblSpeed1, lblTimeLeft1));
+            downloaderPool.Add(new DownloaderThread(prb2, lblFile2, lblDownload2, lblSpeed2, lblTimeLeft2));
+            downloaderPool.Add(new DownloaderThread(prb3, lblFile3, lblDownload3, lblSpeed3, lblTimeLeft3));
+
+            int i = 0;
+            while (i < directLinks.Count)
             {
-                AddDownloadSongToConsole(link);
+                DownloaderThread downloaderThread = downloaderPool.Take();
+                if (downloaderThread != null)
+                {
+                    string link = directLinks[i];
+                    AddDownloadSongToConsole(link);
+                    downloaderThread.Downloader = new Downloader(link, txtDownloadFolder.Text.Trim());
+                    Thread t = new Thread(new ThreadStart(downloaderThread.Download));
+                    threads.Add(t);
+                    t.Start();
+                    i++;
+                }
+                else
+                {
+                    Application.DoEvents();
+                }
+
+                /*
                 int result = DownloadFile(link);
                 string addr;
                 while ((result == 403 || result == -1) && (proxies.Count() > 0))
@@ -88,15 +120,30 @@ namespace CSN
                     }
                     proxies.RemoveAt(0);
                 }
-                if (stopped)
-                    break;
+                */
             }
+
+            bool running = true;
+            while (running)
+            {
+                bool allStopped = true;
+                foreach (Thread t in threads)
+                {
+                    allStopped = allStopped && ((t.ThreadState == ThreadState.Aborted) || (t.ThreadState == ThreadState.Stopped));
+                }
+                running = !allStopped;
+                Application.DoEvents();
+            }
+
+            txtConsole.AppendText(Environment.NewLine);
+            txtConsole.AppendText(" - DONE." + Environment.NewLine);
+
             btnDownload.Enabled = true;
             btnStop.Enabled = false;
             Application.UseWaitCursor = false;
         }
 
-        private void btnClose_Click(object sender, EventArgs e)
+        private void btnStop_Click(object sender, EventArgs e)
         {
             stopped = true;
             if (downloader != null)
@@ -108,7 +155,10 @@ namespace CSN
         {
             if (!string.IsNullOrEmpty(directLink))
             {
-                txtConsole.AppendText(" - " + directLink);
+                lock (txtConsole)
+                {
+                    txtConsole.BeginInvoke(new AppendTextDelegate(AppendText), txtConsole, " - " + directLink + Environment.NewLine);
+                }
             }
 
             Application.DoEvents();
@@ -116,13 +166,13 @@ namespace CSN
 
         private int DownloadFile(string directLink, WebProxy proxy = null)
         {
-            downloader = new Downloader();
+            downloader = new Downloader(directLink, txtDownloadFolder.Text.Trim(), proxy);
             downloader.CallingClass(new ConsoleLogger());
             downloader.Completed += Downloader_Completed;
             downloader.Error += Downloader_Error;
             downloader.ProgressChanged += Downloader_ProgressChanged;
 
-            return downloader.DownloadFile(directLink, txtDownloadFolder.Text.Trim(), proxy);
+            return downloader.Start();
         }
 
         private void Downloader_ProgressChanged(object sender, DownloadProgressChangedEventArgs e)
@@ -151,7 +201,7 @@ namespace CSN
         {
             Downloader downloader = (Downloader)sender;
             downloader.Rename();
-            txtConsole.AppendText(" ... Proxy: " + downloader.GetProxyAddress() + ". Error: " + e.ErrorMessage + Environment.NewLine);
+            txtConsole.AppendText(" ... Proxy: [" + downloader.GetProxyAddress() + "]. ERROR: " + e.ErrorMessage + Environment.NewLine);
             Application.DoEvents();
         }
 
