@@ -91,7 +91,7 @@ namespace CSN
             if (tempFileInfo.Exists)
                 existingLength = tempFileInfo.Length;
 
-            var request = (HttpWebRequest)HttpWebRequest.Create(downloadLink);
+            var request = (HttpWebRequest)HttpWebRequest.Create(DownloadLink);
             request.Proxy = Proxy;
             request.AddRange(existingLength);
 
@@ -99,6 +99,10 @@ namespace CSN
             {
                 using (var response = (HttpWebResponse)request.GetResponse())
                 {
+                    // var header = response.Headers;
+                    // Content - Range:
+                    // Content-Length:
+
                     long fileSize = existingLength + response.ContentLength; //response.ContentLength gives me the size that is remaining to be downloaded
                     bool downloadResumable; // need it for not sending any progress
 
@@ -124,32 +128,34 @@ namespace CSN
                         downloadResumable = false;
                     }
                     OnResumabilityChanged(new DownloadStatusChangedEventArgs(downloadResumable));
-
                     using (var saveFileStream = tempFileInfo.Open(downloadResumable ? FileMode.Append : FileMode.Create, FileAccess.Write))
-                    using (var stream = response.GetResponseStream())
                     {
-                        byte[] downBuffer = new byte[4096];
-                        int byteSize = 0;
-                        long totalReceived = byteSize + existingLength;
-                        var sw = Stopwatch.StartNew();
-                        while (!Stopped && (byteSize = stream.Read(downBuffer, 0, downBuffer.Length)) > 0)
+                        using (var stream = response.GetResponseStream())
                         {
-                            saveFileStream.Write(downBuffer, 0, byteSize);
-                            totalReceived += byteSize;
+                            byte[] downBuffer = new byte[4096];
+                            int byteSize = 0;
+                            long totalReceived = byteSize + existingLength;
+                            var sw = Stopwatch.StartNew();
+                            while (!Stopped && (byteSize = stream.Read(downBuffer, 0, downBuffer.Length)) > 0)
+                            {
+                                saveFileStream.Write(downBuffer, 0, byteSize);
+                                totalReceived += byteSize;
 
-                            float currentSpeed = totalReceived / (float)sw.Elapsed.TotalSeconds;
-                            OnProgressChanged(new DownloadProgressChangedEventArgs(totalReceived, fileSize, (long)currentSpeed));
+                                float currentSpeed = totalReceived / (float)sw.Elapsed.TotalSeconds;
+                                OnProgressChanged(new DownloadProgressChangedEventArgs(totalReceived, fileSize, (long)currentSpeed));
 
-                            pauseLock.Wait();
-                            pauseLock.Release();
+                                pauseLock.Wait();
+                                pauseLock.Release();
+                            }
+                            sw.Stop();
                         }
-                        sw.Stop();
                     }
                 }
                 if (!Stopped) OnCompleted(EventArgs.Empty);
             }
             catch (WebException e)
             {
+                Console.WriteLine("ERROR: " + e.Message);
                 Stopped = true;
                 HttpWebResponse response = (HttpWebResponse)e.Response;
                 //MessageBox.Show(e.Message, filename);

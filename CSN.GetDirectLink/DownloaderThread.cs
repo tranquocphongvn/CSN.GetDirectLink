@@ -1,6 +1,8 @@
-﻿using System;
+﻿using CSN.GetDirectLink;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,25 +17,27 @@ namespace CSN
 
         private Downloader downloader;
         private ProgressBar progressBar;
-        private Label lblFilename, lblDownload, lblSpeed, lblTimeLeft;
-        public DownloaderThread(ProgressBar progressBar, Label lblFilename, Label lblDownload, Label lblSpeed, Label lblTimeLeft)
+        private Label lblFilename, lblProxy, lblDownload, lblSpeed, lblTimeLeft;
+        public DownloaderThread(ProgressBar progressBar, Label lblFilename, Label lblProxy, Label lblDownload, Label lblSpeed, Label lblTimeLeft)
         {
             Downloader = null;
 
             this.progressBar = progressBar;
             this.lblFilename = lblFilename;
+            this.lblProxy = lblProxy;
             this.lblDownload = lblDownload;
             this.lblSpeed = lblSpeed;
             this.lblTimeLeft = lblTimeLeft;
 
             this.progressBar.Value = 0;
             this.lblFilename.Text = "F:";
+            this.lblProxy.Text = "P: NONE";
             this.lblDownload.Text = "D: 0 MB/0 MB";
             this.lblSpeed.Text = "S: 0 MB/s";
             this.lblTimeLeft.Text = "L: 00:00:00.0000";
         }
 
-        public DownloaderThread(Downloader downloader, ProgressBar progressBar, Label lblFilename, Label lblDownload, Label lblSpeed, Label lblTimeLeft) : this(progressBar, lblFilename, lblDownload, lblSpeed, lblTimeLeft)
+        public DownloaderThread(Downloader downloader, ProgressBar progressBar, Label lblFilename, Label lblProxy, Label lblDownload, Label lblSpeed, Label lblTimeLeft) : this(progressBar, lblFilename, lblProxy, lblDownload, lblSpeed, lblTimeLeft)
         {
             Downloader = downloader;
         }
@@ -65,7 +69,33 @@ namespace CSN
 
         public void Download()
         {
-            downloader.Start();
+            progressBar.BeginInvoke(new SetProgressBarValueDelegate(SetProgressBarValue), progressBar, 0);
+
+            lblFilename.BeginInvoke(new SetLabelTextDelegate(SetLabelText), lblFilename, downloader.Filename);
+            lblProxy.BeginInvoke(new SetLabelTextDelegate(SetLabelText), lblProxy, "P: " + downloader.GetProxyAddress());
+            lblDownload.BeginInvoke(new SetLabelTextDelegate(SetLabelText), lblDownload, string.Format("D: {0:n}/{1:n} MB", 0, 0));
+            lblSpeed.BeginInvoke(new SetLabelTextDelegate(SetLabelText), lblSpeed, string.Format("S: {0:n4} MB/s", 0));
+            lblTimeLeft.BeginInvoke(new SetLabelTextDelegate(SetLabelText), lblTimeLeft, "L: 00:00:00.0000");
+
+            Application.DoEvents();
+
+            string downloadLink = Downloader.DownloadLink;
+            string saveFolder = Downloader.SaveDirectory;
+
+            int result = Downloader.Start();
+            lock (Utils.Proxies)
+            {
+                while ((result == 403 || result == -1) && (Utils.Proxies.Count() > 0))
+                {
+                    string proxy = Utils.Proxies[0];
+                    if (!String.IsNullOrEmpty(proxy))
+                    {
+                        Downloader = new Downloader(downloadLink, saveFolder, new WebProxy(proxy));
+                        result = Downloader.Start();
+                    }
+                    Utils.Proxies.RemoveAt(0);
+                }
+            }
         }
 
         public void SetLabelText(Label lbl, string text)
@@ -89,6 +119,7 @@ namespace CSN
             progressBar.BeginInvoke(new SetProgressBarValueDelegate(SetProgressBarValue), progressBar, percentage);
 
             lblFilename.BeginInvoke(new SetLabelTextDelegate(SetLabelText), lblFilename, downloader.Filename);
+            lblProxy.BeginInvoke(new SetLabelTextDelegate(SetLabelText), lblProxy, "P: " + downloader.GetProxyAddress());
             lblDownload.BeginInvoke(new SetLabelTextDelegate(SetLabelText), lblDownload, string.Format("D: {0:n}/{1:n} MB", e.BytesReceived / 1048576.0, e.TotalBytesToReceive / 1048576.0));
             lblSpeed.BeginInvoke(new SetLabelTextDelegate(SetLabelText), lblSpeed, string.Format("S: {0:n4} MB/s", e.CurrentSpeed / 1048576));
             lblTimeLeft.BeginInvoke(new SetLabelTextDelegate(SetLabelText), lblTimeLeft, "L: " + e.TimeLeft.ToString(@"hh\:mm\:ss\.ffff"));
@@ -98,15 +129,18 @@ namespace CSN
 
         private void Downloader_Error(object sender, ErrorEventArgs e)
         {
-            if (Downloader != null && !Downloader.Stopped)
+            if (Downloader != null)
                 Downloader.StopDownload();
             Downloader = null;
         }
 
         private void Downloader_Completed(object sender, EventArgs e)
         {
-            if (Downloader != null && !Downloader.Stopped)
+            if (Downloader != null)
+            {
+                Utils.DownloadedLinks.Add(Downloader.DownloadLink);
                 Downloader.StopDownload();
+            }
             Downloader = null;
         }
     }

@@ -21,6 +21,9 @@ namespace CSN.GetDirectLink
 
         public static List<string> SongQuality = new List<string>(new string[] { FLAC_LOSSLESS, M4A_500kbps, MP3_320kbps, MP3_128kbps });
 
+        public static List<string> DownloadedLinks = new List<string>();
+        public static List<string> Proxies = new List<string>();
+
         public static Image byteArrayToImage(byte[] byteArrayIn)
         {
             MemoryStream ms = new MemoryStream(byteArrayIn);
